@@ -376,14 +376,33 @@
         try {
           addLog('Gerando QR Code...', 'info');
           const response = await callWebhook('connect', { instance });
-          const qrCode = response[0].data.qrcode;
-          document.getElementById('qr-code').src = qrCode;
+          const qrCode = response.code || response.qrcode;
+
           document.getElementById('connection-form').classList.add('hidden');
           document.getElementById('qr-display').classList.remove('hidden');
           document.getElementById('status-display').classList.remove('hidden');
           document.getElementById('error-display').classList.add('hidden');
           document.getElementById('disconnected-warning').classList.add('hidden');
-          addLog('QR Code gerado com sucesso!', 'success');
+
+          const canvas = document.getElementById('qrcodeCanvas');
+          document.getElementById('loading-spinner').classList.add('hidden');
+          if (qrCode && canvas) {
+            canvas.style.display = 'block';
+            QRCode.toCanvas(canvas, qrCode, {
+              width: 180,
+              height: 180,
+              margin: 0
+            }, function (error) {
+              if (error) {
+                addLog(`Erro ao gerar QR Code: ${error.message}`, 'error');
+              } else {
+                addLog('QR Code gerado com sucesso!', 'success');
+              }
+            });
+          } else {
+            addLog('QR Code não disponível no momento', 'info');
+          }
+
           stopStatusPolling(window.currentPollId);
           window.currentPollId = startStatusPolling(instance, info, true);
         } catch (error) {
