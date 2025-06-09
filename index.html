@@ -328,7 +328,9 @@
         const logsCount = document.getElementById('logs-count');
         const currentCount = parseInt(logsCount.textContent);
         logsCount.textContent = currentCount + 1;
-      }
+        }
+
+      let currentPollId = null;
 
       // Função centralizada para fazer chamadas ao webhook
       async function callWebhook(action, data = {}) {
@@ -384,8 +386,8 @@
           document.getElementById('error-display').classList.add('hidden');
           document.getElementById('disconnected-warning').classList.add('hidden');
           addLog('QR Code gerado com sucesso!', 'success');
-          stopStatusPolling(window.currentPollId);
-          window.currentPollId = startStatusPolling(instance, info, true);
+          stopStatusPolling(currentPollId);
+          currentPollId = startStatusPolling(instance, info, true);
         } catch (error) {
           addLog('Erro ao gerar QR Code: ' + error.message, 'error');
         }
@@ -984,6 +986,12 @@
           }
         }, interval);
         return pollId;
+      }
+
+      function stopStatusPolling(pollId) {
+        if (pollId) {
+          clearInterval(pollId);
+        }
       }
 
       // Função para verificar o estado da conexão
