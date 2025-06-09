@@ -371,6 +371,13 @@
         }
       }
 
+      // Encerra o polling de status ativo
+      function stopStatusPolling(pollId) {
+        if (pollId) {
+          clearInterval(pollId);
+        }
+      }
+
       // Função para gerar QR code
       async function generateQRCode(instance, info) {
         try {
