@@ -470,11 +470,16 @@
       // Exibe informações da instância usando o objeto 'info' já obtido
       async function fetchInstanceInfo(instance, info) {
         try {
+          if (!info) {
+            const response = await callWebhook('status', { instance });
+            info = Array.isArray(response) ? response[0].data : response;
+          }
+
           if (info) {
-              const existingProfile = document.getElementById('profile-info');
-              if (existingProfile) {
-                existingProfile.remove();
-              }
+            const existingProfile = document.getElementById('profile-info');
+            if (existingProfile) {
+              existingProfile.remove();
+            }
 
             if (info.connectionStatus !== 'open') {
                 addLog('Instância desconectada', 'error');
@@ -888,9 +893,7 @@
         const name = document.getElementById('profile-name').value;
         const status = document.getElementById('profile-status').value;
         const pictureFile = document.getElementById('profile-picture').files[0];
-        const baseUrl = 'https://link-da-sua-api.com.br';
         const instance = document.getElementById('instance').value;
-        const apiKey = 'suaApiKey';
 
         if (name) {
           await updateProfileName(name);
@@ -905,7 +908,7 @@
         }
 
         // Atualiza as informações do perfil na interface
-        await fetchInstanceInfo(baseUrl, instance, apiKey);
+        await fetchInstanceInfo(instance);
 
         closeEditProfileModal();
       });
