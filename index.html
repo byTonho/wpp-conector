@@ -316,8 +316,8 @@
       function addLog(message, type = 'info') {
         const logsDiv = document.getElementById('logs');
         const logEntry = document.createElement('div');
-        const color = type === 'info' ? 'text-blue-600 dark:text-blue-400' : 
-                     type === 'success' ? 'text-green-600 dark:text-green-400' : 
+        const color = type === 'info' ? 'text-blue-600 dark:text-blue-400' :
+                     type === 'success' ? 'text-green-600 dark:text-green-400' :
                      'text-red-600 dark:text-red-400';
         logEntry.className = `${color} text-xs font-mono`;
         logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
@@ -328,6 +328,15 @@
         const logsCount = document.getElementById('logs-count');
         const currentCount = parseInt(logsCount.textContent);
         logsCount.textContent = currentCount + 1;
+      }
+
+      function escapeHTML(value) {
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
       }
 
       // Função centralizada para fazer chamadas ao webhook
@@ -487,50 +496,40 @@
               const profileInfo = document.createElement('div');
               profileInfo.id = 'profile-info';
               profileInfo.className = 'mt-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg';
+              const profilePic = escapeHTML(info.profilePicUrl || 'https://via.placeholder.com/50');
+              const profileName = escapeHTML(info.profileName || 'Nome não disponível');
+              const profileNumber = escapeHTML(info.number || info.ownerJid || 'Número não disponível');
+
               profileInfo.innerHTML = `
                 <div class="flex flex-col space-y-4">
                   <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
-                    <img src="${info.profilePicUrl || 'https://via.placeholder.com/50'}" 
-                           alt="Foto do perfil" 
-                           class="h-12 w-12 rounded-full object-cover">
+                      <img src="${profilePic}" alt="Foto do perfil" class="h-12 w-12 rounded-full object-cover">
                     </div>
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      ${info.profileName || 'Nome não disponível'}
-                      </p>
-                      <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                      ${info.number || info.ownerJid || 'Número não disponível'}
-                      </p>
+                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${profileName}</p>
+                      <p class="text-sm text-gray-500 dark:text-gray-400 truncate">${profileNumber}</p>
                     </div>
                     <div class="flex-shrink-0">
                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      info.connectionStatus === 'open' 
+                        info.connectionStatus === 'open'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                           : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                      }">
-                      ${info.connectionStatus === 'open' ? 'Conectado' : 'Desconectado'}
-                      </span>
+                      }">${info.connectionStatus === 'open' ? 'Conectado' : 'Desconectado'}</span>
                     </div>
                   </div>
-                  
+
                   <div class="grid grid-cols-3 gap-4 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <div class="text-center">
-                      <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                      ${info._count.Chat.toLocaleString()}
-                      </p>
+                      <p class="text-lg font-semibold text-gray-900 dark:text-white">${info._count.Chat.toLocaleString()}</p>
                       <p class="text-xs text-gray-500 dark:text-gray-400">Conversas</p>
                     </div>
                     <div class="text-center">
-                      <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                      ${info._count.Contact.toLocaleString()}
-                      </p>
+                      <p class="text-lg font-semibold text-gray-900 dark:text-white">${info._count.Contact.toLocaleString()}</p>
                       <p class="text-xs text-gray-500 dark:text-gray-400">Contatos</p>
                     </div>
                     <div class="text-center">
-                      <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                      ${info._count.Message.toLocaleString()}
-                      </p>
+                      <p class="text-lg font-semibold text-gray-900 dark:text-white">${info._count.Message.toLocaleString()}</p>
                       <p class="text-xs text-gray-500 dark:text-gray-400">Mensagens</p>
                     </div>
                   </div>
