@@ -376,8 +376,25 @@
         try {
           addLog('Gerando QR Code...', 'info');
           const response = await callWebhook('connect', { instance });
-          const qrCode = response[0].data.qrcode;
-          document.getElementById('qr-code').src = qrCode;
+          const qrData = response[0].data.qrcode || response[0].data.code;
+
+          const canvas = document.getElementById('qrcodeCanvas');
+          document.getElementById('loading-spinner').classList.add('hidden');
+          canvas.style.display = 'block';
+
+          if (qrData) {
+            QRCode.toCanvas(
+              canvas,
+              qrData,
+              { width: 180, height: 180, margin: 0 },
+              function (error) {
+                if (error) {
+                  addLog(`Erro ao gerar QR Code: ${error.message}`, 'error');
+                }
+              }
+            );
+          }
+
           document.getElementById('connection-form').classList.add('hidden');
           document.getElementById('qr-display').classList.remove('hidden');
           document.getElementById('status-display').classList.remove('hidden');
