@@ -16,6 +16,15 @@
         margin: 10px 0;
         border-radius: 4px;
       }
+      .network-warning {
+        background-color: #ff9800;
+        color: #000;
+        padding: 8px;
+        text-align: center;
+        font-weight: bold;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
     </style>
   </head>
   <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
@@ -78,6 +87,9 @@
               <div class="header-line"></div>
               <div id="disconnected-warning" class="disconnected-warning hidden">
                 Dispositivo desconectado
+              </div>
+              <div id="network-warning" class="network-warning hidden">
+                Problemas de conexão com o servidor
               </div>
               <h1>Nome da Instância</h1>
             </div>
@@ -348,6 +360,10 @@
       async function callWebhook(action, data = {}) {
         const webhookUrl = 'https://automacao.bytonho.com.br/webhook/conectar-whatsapp';
         try {
+          const warn = document.getElementById('network-warning');
+          if (warn) {
+            warn.classList.add('hidden');
+          }
           addLog(`Enviando requisição para ${action}...`, 'info');
           const response = await fetch(webhookUrl, {
             method: 'POST',
@@ -382,7 +398,16 @@
 
           throw new Error('INSTANCE_NOT_FOUND');
         } catch (error) {
-          addLog(`Erro na chamada do webhook: ${error.message}`, 'error');
+          if (error instanceof TypeError && error.message && error.message.includes('Failed to fetch')) {
+            addLog('Falha de rede ao acessar o servidor', 'error');
+            const warn = document.getElementById('network-warning');
+            if (warn) {
+              warn.textContent = 'Falha de rede: verifique sua conexão.';
+              warn.classList.remove('hidden');
+            }
+          } else {
+            addLog(`Erro na chamada do webhook: ${error.message}`, 'error');
+          }
           throw error;
         }
       }
@@ -434,8 +459,7 @@
         const checkStatus = async () => {
           try {
             const data = await callWebhook('checkConnectionState', { instance });
-            const n8nItem = Array.isArray(data) ? data[0] : data;
-            const info = n8nItem.data;
+            const info = data.data;
             const currentState = info.connectionStatus || info.state || 'closed';
               const now = Date.now();
 
@@ -466,7 +490,7 @@
                 lastInfoUpdate = now;
                 // Chama connect apenas se não está conectado
                 const qrData = await callWebhook('connect', { instance });
-                const qrInfo = Array.isArray(qrData) ? qrData[0].data : qrData.data;
+                const qrInfo = qrData.data;
                 if (qrInfo && qrInfo.code) {
                   const canvas = document.getElementById('qrcodeCanvas');
                   QRCode.toCanvas(canvas, qrInfo.code, {
@@ -506,7 +530,7 @@
         try {
           if (!info) {
             const response = await callWebhook('status', { instance });
-            info = Array.isArray(response) ? response[0].data : response.data;
+            info = response.data;
           }
 
           if (info) {
@@ -750,8 +774,7 @@
 
         try {
           const statusData = await callWebhook('checkConnectionState', { instance });
-          const infoItem = Array.isArray(statusData) ? statusData[0] : statusData;
-          const info = infoItem.data;
+          const info = statusData.data;
           const currentState = info.connectionStatus || info.state || 'closed';
 
           if (currentState === 'open') {
