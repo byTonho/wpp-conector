@@ -342,6 +342,9 @@
       }
 
       // Função centralizada para fazer chamadas ao webhook
+      // O n8n responde normalmente com um array contendo objetos no formato:
+      // [ { success: true, data: { ... } } ]
+      // Apenas o primeiro item é utilizado por esta aplicação.
       async function callWebhook(action, data = {}) {
         const webhookUrl = 'https://automacao.bytonho.com.br/webhook/conectar-whatsapp';
         try {
@@ -371,7 +374,9 @@
           if (Array.isArray(responseData) && responseData.length > 0) {
             const firstItem = responseData[0];
             if (firstItem.success && firstItem.data) {
-              return firstItem.data;
+              // Retorna o objeto completo para que outras propriedades possam
+              // ser utilizadas quando necessário
+              return firstItem;
             }
           }
 
@@ -387,7 +392,7 @@
         try {
           addLog('Gerando QR Code...', 'info');
           const response = await callWebhook('connect', { instance });
-          const qrData = response[0].data.qrcode || response[0].data.code;
+          const qrData = response.data.qrcode || response.data.code;
 
           const canvas = document.getElementById('qrcodeCanvas');
           document.getElementById('loading-spinner').classList.add('hidden');
@@ -429,7 +434,8 @@
         const checkStatus = async () => {
           try {
             const data = await callWebhook('checkConnectionState', { instance });
-            const info = Array.isArray(data) ? data[0] : data;
+            const n8nItem = Array.isArray(data) ? data[0] : data;
+            const info = n8nItem.data;
             const currentState = info.connectionStatus || info.state || 'closed';
               const now = Date.now();
 
@@ -460,7 +466,7 @@
                 lastInfoUpdate = now;
                 // Chama connect apenas se não está conectado
                 const qrData = await callWebhook('connect', { instance });
-                const qrInfo = Array.isArray(qrData) ? qrData[0] : qrData;
+                const qrInfo = Array.isArray(qrData) ? qrData[0].data : qrData.data;
                 if (qrInfo && qrInfo.code) {
                   const canvas = document.getElementById('qrcodeCanvas');
                   QRCode.toCanvas(canvas, qrInfo.code, {
@@ -500,7 +506,7 @@
         try {
           if (!info) {
             const response = await callWebhook('status', { instance });
-            info = Array.isArray(response) ? response[0].data : response;
+            info = Array.isArray(response) ? response[0].data : response.data;
           }
 
           if (info) {
@@ -744,7 +750,8 @@
 
         try {
           const statusData = await callWebhook('checkConnectionState', { instance });
-          const info = Array.isArray(statusData) ? statusData[0] : statusData;
+          const infoItem = Array.isArray(statusData) ? statusData[0] : statusData;
+          const info = infoItem.data;
           const currentState = info.connectionStatus || info.state || 'closed';
 
           if (currentState === 'open') {
@@ -1017,7 +1024,7 @@
       async function checkConnectionState(instance, info) {
         try {
           const response = await callWebhook('status', { instance });
-          const state = response[0].data.state;
+          const state = response.data.state;
           updateInterfaceForState(state, instance, info);
           return state;
         } catch (error) {
