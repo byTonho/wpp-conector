@@ -421,8 +421,7 @@
         try {
           addLog('Gerando QR Code...', 'info');
           const response = await callWebhook('connect', { instance });
-          const qrData = response.data.qrcode || response.data.code;
-
+          const qrData = (response.data && response.data[0] && (response.data[0].qrcode || response.data[0].code)) || null;
           const canvas = document.getElementById('qrcodeCanvas');
           document.getElementById('loading-spinner').classList.add('hidden');
           canvas.style.display = 'block';
@@ -463,7 +462,7 @@
         const checkStatus = async () => {
           try {
             const data = await callWebhook('checkConnectionState', { instance });
-            const info = data.data;
+            const info = data.data && data.data[0] ? data.data[0] : data;
             const currentState = info.connectionStatus || info.state || 'closed';
               const now = Date.now();
 
@@ -494,7 +493,7 @@
                 lastInfoUpdate = now;
                 // Chama connect apenas se não está conectado
                 const qrData = await callWebhook('connect', { instance });
-                const qrInfo = qrData.data;
+                const qrInfo = qrData.data && qrData.data[0] ? qrData.data[0] : qrData;
                 if (qrInfo && qrInfo.code) {
                   const canvas = document.getElementById('qrcodeCanvas');
                   QRCode.toCanvas(canvas, qrInfo.code, {
@@ -534,7 +533,7 @@
         try {
           if (!info) {
             const response = await callWebhook('status', { instance });
-            info = response.data;
+            info = response.data && response.data[0] ? response.data[0] : response;
           }
 
           if (info) {
@@ -778,7 +777,7 @@
 
         try {
           const statusData = await callWebhook('checkConnectionState', { instance });
-          const info = statusData.data;
+          const info = statusData.data && statusData.data[0] ? statusData.data[0] : statusData;
           const currentState = info.connectionStatus || info.state || 'closed';
 
           if (currentState === 'open') {
@@ -1049,16 +1048,12 @@
 
       // Função para verificar o estado da conexão
       async function checkConnectionState(instance, info) {
-  try {
-    const response = await callWebhook('status', { instance });
-    const state = response.data.state;
-    updateInterfaceForState(state, instance, info);
-    return state;
-  } catch (error) {
-    addLog('Erro ao verificar estado da conexão: ' + error.message, 'error');
-    return 'error';
-  }
-}
+        try {
+          const response = await callWebhook('status', { instance });
+          const stateInfo = response.data && response.data[0] ? response.data[0] : {};
+          const state = stateInfo.connectionStatus || stateInfo.state;
+          updateInterfaceForState(state, instance, info);
+          return state;
         } catch (error) {
           addLog('Erro ao verificar estado da conexão: ' + error.message, 'error');
           return 'error';
