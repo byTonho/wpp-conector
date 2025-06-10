@@ -1017,9 +1017,17 @@
       async function checkConnectionState(instance, info) {
         try {
           const response = await callWebhook('status', { instance });
-          const state = response[0].data.state;
-          updateInterfaceForState(state, instance, info);
-          return state;
+          const data = Array.isArray(response) ? response[0].data : response;
+          const connectionStatus = data.connectionStatus || data.state;
+
+          updateInterfaceForState(connectionStatus, instance, info);
+
+          if (connectionStatus === 'open') {
+            document.getElementById('qr-display').classList.add('hidden');
+            document.getElementById('status-display').classList.add('hidden');
+          }
+
+          return connectionStatus;
         } catch (error) {
           addLog('Erro ao verificar estado da conexão: ' + error.message, 'error');
           return 'error';
