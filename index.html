@@ -7,15 +7,24 @@
     <style>
       @import url(https://fonts.googleapis.com/css2?family=Lato&display=swap);
 @import url(https://fonts.googleapis.com/css2?family=Open+Sans&display=swap);
-      .disconnected-warning {
-        background-color: #ffeb3b;
-        color: #000;
-        padding: 8px;
-        text-align: center;
-        font-weight: bold;
-        margin: 10px 0;
-        border-radius: 4px;
-      }
+.disconnected-warning {
+  background-color: #ffeb3b;
+  color: #000;
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+  margin: 10px 0;
+  border-radius: 4px;
+}
+.network-warning {
+  background-color: #ff9800;
+  color: #000;
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+  margin: 10px 0;
+  border-radius: 4px;
+}
     </style>
   </head>
   <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
@@ -78,6 +87,9 @@
               <div class="header-line"></div>
               <div id="disconnected-warning" class="disconnected-warning hidden">
                 Dispositivo desconectado
+              </div>
+              <div id="network-warning" class="network-warning hidden">
+                Problemas de conexão com o servidor
               </div>
               <h1>Nome da Instância</h1>
             </div>
@@ -345,6 +357,10 @@
       async function callWebhook(action, data = {}) {
         const webhookUrl = 'https://automacao.bytonho.com.br/webhook/conectar-whatsapp';
         try {
+          const warn = document.getElementById('network-warning');
+          if (warn) {
+            warn.classList.add('hidden');
+          }
           addLog(`Enviando requisição para ${action}...`, 'info');
           const response = await fetch(webhookUrl, {
             method: 'POST',
@@ -377,7 +393,16 @@
 
           throw new Error('INSTANCE_NOT_FOUND');
         } catch (error) {
-          addLog(`Erro na chamada do webhook: ${error.message}`, 'error');
+          if (error instanceof TypeError && error.message && error.message.includes('Failed to fetch')) {
+            addLog('Falha de rede ao acessar o servidor', 'error');
+            const warn = document.getElementById('network-warning');
+            if (warn) {
+              warn.textContent = 'Falha de rede: verifique sua conexão.';
+              warn.classList.remove('hidden');
+            }
+          } else {
+            addLog(`Erro na chamada do webhook: ${error.message}`, 'error');
+          }
           throw error;
         }
       }
